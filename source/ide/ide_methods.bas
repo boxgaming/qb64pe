@@ -14169,7 +14169,7 @@ SUB ideQBJSBuildBox
         COLOR 2, 7: LOCATE p.y + 1, p.x + 2
         PRINT "Status: ";
         COLOR 0, 7
-        Print webBuildStatus$;
+        PRINT webBuildStatus$;
         ' If the compile-only option is selected, make the copy project dependencies
         ' option appear disabled
         IF o(coChk).sel THEN
@@ -14179,6 +14179,16 @@ SUB ideQBJSBuildBox
                 LOCATE p.y + o(cpfChk).y, p.x + o(cpfChk).x + 1
                 PRINT "X"
             END IF
+        END IF
+        ' If no compiler warning or error message is selected, make the "Go to Selected"
+        ' button appear disabled
+        sel = o(warnList).sel
+        IF sel < 1 OR sel > UBOUND(errorLines) THEN
+            y = p.y + o(buildBut).y
+            x = p.x + (p.w - 44) \ 2 + 17
+            IF CHR$(SCREEN(y, x)) <> "<" THEN x = x + 1
+            COLOR 2, 7: LOCATE y, x
+            PRINT "< Go to Selected >"
         END IF
         '-------- end of custom display changes --------
 
@@ -14190,9 +14200,9 @@ SUB ideQBJSBuildBox
         skipEvents = 0
         IF webBuildStatus$ = "Compiling qbjs-build tool..." THEN
             $IF WINDOWS THEN
-                Shell _HIDE Chr$(34) + _StartDir$ + "qb64pe" + Chr$(34) + " -x " + Chr$(34) + _StartDir$ + "source\utilities\qbjs\qbjs-build.bas" + Chr$(34) + " -o " + Chr$(34) + _StartDir$ + "qbjs-build.exe" + Chr$(34)
+                SHELL _HIDE CHR$(34) + _CWD$ + "qb64pe" + CHR$(34) + " -x " + CHR$(34) + _CWD$ + "source\utilities\qbjs\qbjs-build.bas" + CHR$(34) + " -o " + CHR$(34) + _CWD$ + "qbjs-build.exe" + CHR$(34)
             $ELSE
-                Shell Chr$(34) + _StartDir$ + "qb64pe" + Chr$(34) + " -x " + Chr$(34) + _StartDir$ + "source/utilities/qbjs/qbjs-build.bas" + Chr$(34) + " -o " + Chr$(34) + _StartDir$ + "qbjs-build" + Chr$(34)
+                SHELL CHR$(34) + _CWD$ + "qb64pe" + CHR$(34) + " -x " + CHR$(34) + _CWD$ + "source/utilities/qbjs/qbjs-build.bas" + CHR$(34) + " -o " + CHR$(34) + _CWD$ + "qbjs-build" + CHR$(34)
             $END IF
             webBuildStatus$ = "Building..."
             skipEvents = 1
@@ -14214,9 +14224,7 @@ SUB ideQBJSBuildBox
                 PUT #150, , outfile$
             NEXT
             CLOSE #150
-            'Shell _HIDE _CWD$ + "qbjs-build " + qbjsOpts$ + " " + Chr$(34) + tempSrcFile$ + Chr$(34) '+ " & echo %errorlevel% > " + _CWD$ + ".qbjs-exit-code"
-            'Shell "echo %errorlevel% > " + _CWD$ + "junk.txt"
-            Shell _HIDE "cmd.exe /c " + Chr$(34) + _CWD$ + "qbjs-build " + qbjsOpts$ + " " + tempSrcFile$ + " > " + _CWD$ + ".qbjs-build-out & call echo %^errorlevel% > " + _CWD$ + ".qbjs-exit-code" + Chr$(34)
+            SHELL _HIDE "cmd.exe /c " + Chr$(34) + _CWD$ + "qbjs-build " + qbjsOpts$ + " " + tempSrcFile$ + " > " + _CWD$ + ".qbjs-build-out & call echo %^errorlevel% > " + _CWD$ + ".qbjs-exit-code" + Chr$(34)
 
             exitCode = 0
             IF _FILEEXISTS(_CWD$ + ".qbjs-exit-code") THEN
@@ -14284,7 +14292,6 @@ SUB ideQBJSBuildBox
 
 
         '-------- custom input response --------
-        'IF K$ = CHR$(13) THEN PRINT STR$(focus)
         IF focus = helpBut AND info <> 0 THEN
             GOSUB LaunchHelpURL
         END IF
@@ -14297,9 +14304,9 @@ SUB ideQBJSBuildBox
             ' Detect qbjs-build tool
             qbjsBuildExists = -1
             $IF WINDOWS THEN
-                If Not _FileExists(_StartDir$ + "qbjs-build.exe") Then qbjsBuildExists = 0
+                If Not _FILEEXISTS(_StartDir$ + "qbjs-build.exe") THEN qbjsBuildExists = 0
             $ELSE
-                If Not _FileExists(_StartDir$ + "qbjs-build") Then qbsBuildExists = 0
+                If Not _FILEEXISTS(_StartDir$ + "qbjs-build") THEN qbsBuildExists = 0
             $END IF
 
             IF NOT qbjsBuildExists THEN
@@ -14372,13 +14379,13 @@ UpdateSettings:
 
 LaunchHelpURL:
     url$ = "https://github.com/boxgaming/qbjs/wiki/QBasic-Language-Support"
-    $If WIN Then
-        Shell _DontWait _Hide "start " + url$
-    $ElseIf MAC Then
-        Shell _DontWait _Hide "open " + url$
-    $ElseIf LINUX Then
-        Shell _DontWait _Hide "xdg-open " + url$
-    $End If
+    $IF WIN THEN
+        SHELL _DONTWAIT _HIDE "start " + url$
+    $ELSEIF MAC THEN
+        Shell _DONTWAIT _HIDE "open " + url$
+    $ELSEIF LINUX THEN
+        Shell _DONTWAIT _HIDE "xdg-open " + url$
+    $END IF
     RETURN
 END SUB
 
