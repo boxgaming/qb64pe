@@ -11,22 +11,22 @@ new_mem_lock();
 sf_mem_lock=mem_lock_tmp;
 sf_mem_lock->type=3;
 if (is_error_pending()) goto exit_subfunc;
-S_60112:;
-if ((*__LONG_MACOSX)||is_error_pending()){
-if(qbevent){evnt(25813,18303,"ide_methods.bas");if(r)goto S_60112;}
-S_60113:;
-if ((func__keydown( 100309 ))||is_error_pending()){
-if(qbevent){evnt(25813,18304,"ide_methods.bas");if(r)goto S_60113;}
-do{
-*_FUNC_CTRL2_LONG_CTRL2= 1 ;
-if(!qbevent)break;evnt(25813,18304,"ide_methods.bas");}while(r);
-}
 S_60116:;
-if ((func__keydown( 100310 ))||is_error_pending()){
-if(qbevent){evnt(25813,18305,"ide_methods.bas");if(r)goto S_60116;}
+if ((*__LONG_MACOSX)||is_error_pending()){
+if(qbevent){evnt(25825,18303,"ide_methods.bas");if(r)goto S_60116;}
+S_60117:;
+if ((func__keydown( 100309 ))||is_error_pending()){
+if(qbevent){evnt(25825,18304,"ide_methods.bas");if(r)goto S_60117;}
 do{
 *_FUNC_CTRL2_LONG_CTRL2= 1 ;
-if(!qbevent)break;evnt(25813,18305,"ide_methods.bas");}while(r);
+if(!qbevent)break;evnt(25825,18304,"ide_methods.bas");}while(r);
+}
+S_60120:;
+if ((func__keydown( 100310 ))||is_error_pending()){
+if(qbevent){evnt(25825,18305,"ide_methods.bas");if(r)goto S_60120;}
+do{
+*_FUNC_CTRL2_LONG_CTRL2= 1 ;
+if(!qbevent)break;evnt(25825,18305,"ide_methods.bas");}while(r);
 }
 }
 exit_subfunc:;
