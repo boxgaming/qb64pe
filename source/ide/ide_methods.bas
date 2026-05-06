@@ -14201,11 +14201,11 @@ SUB ideQBJSBuildBox
         EQ$ = "^" + Q$ ' escaped double quote
         skipEvents = 0
         IF webBuildStatus$ = "Compiling qbjs-build tool..." THEN
-            $IF WINDOWS THEN
-                SHELL _HIDE Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "source\utilities\qbjs\qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build.exe" + Q$
-            $ELSE
-                SHELL Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "source/utilities/qbjs/qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build" + Q$
-            $END IF
+            IF INSTR(_OS$, "WIN") > 0 THEN
+                SHELL _HIDE Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal\support\converter\qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build.exe" + Q$
+            ELSE
+                SHELL Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal/support/converter/qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build" + Q$
+            END IF
             webBuildStatus$ = "Building..."
             skipEvents = 1
 
@@ -14226,11 +14226,11 @@ SUB ideQBJSBuildBox
                 PUT #150, , outfile$
             NEXT
             CLOSE #150
-            $IF WINDOWS THEN
+            IF INSTR(_OS$, "WIN") > 0 THEN
                 SHELL _HIDE "cmd.exe /c " + Q$ + Q$ + _CWD$ + "qbjs-build" + Q$ + " " + qbjsOpts$ + " " + EQ$ + tempSrcFile$ + EQ$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + " & call echo %^errorlevel% > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$ + Q$
-            $ELSE
+            ELSE
                 SHELL Q$ + _CWD$ + "qbjs-build" + Q$ + " " + qbjsOpts$ + " " + Q$ + tempSrcFile$ + Q$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + ";  echo $? > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$
-            $END IF
+            END IF
             exitCode = 0
             IF _FILEEXISTS(_CWD$ + ".qbjs-exit-code") THEN
                 exitCode = Val(_ReadFile$(_CWD$ + ".qbjs-exit-code"))
@@ -14308,11 +14308,11 @@ SUB ideQBJSBuildBox
             GOSUB UpdateSettings
             ' Detect qbjs-build tool
             qbjsBuildExists = -1
-            $IF WINDOWS THEN
-                If Not _FILEEXISTS(_CWD$ + "qbjs-build.exe") THEN qbjsBuildExists = 0
-            $ELSE
-                If Not _FILEEXISTS(_CWD$ + "qbjs-build") THEN qbjsBuildExists = 0
-            $END IF
+            IF INSTR(_OS$, "WIN") > 0 THEN
+                IF NOT _FILEEXISTS(_CWD$ + "qbjs-build.exe") THEN qbjsBuildExists = 0
+            ELSE
+                If NOT _FILEEXISTS(_CWD$ + "qbjs-build") THEN qbjsBuildExists = 0
+            END IF
 
             IF NOT qbjsBuildExists THEN
                 webBuildStatus$ = "Compiling qbjs-build tool..."
@@ -14385,13 +14385,13 @@ UpdateSettings:
 
 LaunchHelpURL:
     url$ = "https://github.com/boxgaming/qbjs/wiki/QBasic-Language-Support"
-    $IF WIN THEN
+    IF INSTR(_OS$, "WIN") > 0 THEN
         SHELL _DONTWAIT _HIDE "start " + url$
-    $ELSEIF MAC THEN
+    ELSEIF INSTR(_OS$, "MAC") THEN
         Shell _DONTWAIT _HIDE "open " + url$
-    $ELSEIF LINUX THEN
+    ELSE ' LINUX
         Shell _DONTWAIT _HIDE "xdg-open " + url$
-    $END IF
+    END IF
     RETURN
 END SUB
 
