@@ -14197,12 +14197,14 @@ SUB ideQBJSBuildBox
         IF cx THEN SCREEN , , 0, 0: LOCATE cy, cx, 1: SCREEN , , 1, 0
 
         '-------- run build steps --------------------------------
+        Q$ = CHR$(34)  ' double quote character
+        EQ$ = "^" + Q$ ' escaped double quote
         skipEvents = 0
         IF webBuildStatus$ = "Compiling qbjs-build tool..." THEN
             $IF WINDOWS THEN
-                SHELL _HIDE CHR$(34) + _CWD$ + "qb64pe" + CHR$(34) + " -x " + CHR$(34) + _CWD$ + "source\utilities\qbjs\qbjs-build.bas" + CHR$(34) + " -o " + CHR$(34) + _CWD$ + "qbjs-build.exe" + CHR$(34)
+                SHELL _HIDE Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "source\utilities\qbjs\qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build.exe" + Q$
             $ELSE
-                SHELL CHR$(34) + _CWD$ + "qb64pe" + CHR$(34) + " -x " + CHR$(34) + _CWD$ + "source/utilities/qbjs/qbjs-build.bas" + CHR$(34) + " -o " + CHR$(34) + _CWD$ + "qbjs-build" + CHR$(34)
+                SHELL Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "source/utilities/qbjs/qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build" + Q$
             $END IF
             webBuildStatus$ = "Building..."
             skipEvents = 1
@@ -14224,13 +14226,16 @@ SUB ideQBJSBuildBox
                 PUT #150, , outfile$
             NEXT
             CLOSE #150
-            SHELL _HIDE "cmd.exe /c " + Chr$(34) + _CWD$ + "qbjs-build " + qbjsOpts$ + " " + tempSrcFile$ + " > " + _CWD$ + ".qbjs-build-out & call echo %^errorlevel% > " + _CWD$ + ".qbjs-exit-code" + Chr$(34)
-
+            $IF WINDOWS THEN
+                SHELL _HIDE "cmd.exe /c " + Q$ + Q$ + _CWD$ + "qbjs-build" + Q$ + " " + qbjsOpts$ + " " + EQ$ + tempSrcFile$ + EQ$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + " & call echo %^errorlevel% > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$ + Q$
+            $ELSE
+                SHELL Q$ + _CWD$ + "qbjs-build" + Q$ + " " + qbjsOpts$ + " " + Q$ + tempSrcFile$ + Q$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + ";  echo $? > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$
+            $END IF
             exitCode = 0
             IF _FILEEXISTS(_CWD$ + ".qbjs-exit-code") THEN
                 exitCode = Val(_ReadFile$(_CWD$ + ".qbjs-exit-code"))
+                KILL _CWD$ + ".qbjs-exit-code"
             END IF
-            '_ECHO "[" + STR$(exitCode) + "]"
 
             IF exitCode = 1 THEN '     No nodejs detected
                 idetxt$(o(warningsLst).txt) = "  -- Node.js not detected! --" + sep + _
@@ -14304,9 +14309,9 @@ SUB ideQBJSBuildBox
             ' Detect qbjs-build tool
             qbjsBuildExists = -1
             $IF WINDOWS THEN
-                If Not _FILEEXISTS(_StartDir$ + "qbjs-build.exe") THEN qbjsBuildExists = 0
+                If Not _FILEEXISTS(_CWD$ + "qbjs-build.exe") THEN qbjsBuildExists = 0
             $ELSE
-                If Not _FILEEXISTS(_StartDir$ + "qbjs-build") THEN qbsBuildExists = 0
+                If Not _FILEEXISTS(_CWD$ + "qbjs-build") THEN qbjsBuildExists = 0
             $END IF
 
             IF NOT qbjsBuildExists THEN
@@ -14351,6 +14356,7 @@ UpdateWarnings:
             END IF
         LOOP UNTIL EOF(150)
         CLOSE #150
+        KILL _CWD$ + ".qbjs-warnings.txt"
     END IF
     IF UBound(errorLines) < 1 THEN
         idetxt$(o(warningsLst).txt) = "-- Build completed with no errors or warnings --"

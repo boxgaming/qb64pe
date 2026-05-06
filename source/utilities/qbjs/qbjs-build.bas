@@ -28,8 +28,13 @@ qbjsDir = qbjsParentDir + PathSeparator + "qbjs-" + Mid$(releaseTag, 2)
 filename = GetFilename(sourceFilepath)
 sourceDir = GetParentPath(sourceFilepath)
 If sourceDir = PathSeparator Then sourceDir = _StartDir$
+If Mid$(sourceDir, Len(sourceDir), 1) <> PathSeparator Then sourceDir = sourceDir + PathSeparator
+Print "QB64 Directory:   " + PROGRAM_DIR
 Print "Source Directory: " + sourceDir
-If sourceDir = PROGRAM_DIR Then NO_PROJECT_FILES = -1
+If sourceDir = PROGRAM_DIR Then
+    Print " - Copy project files disabled for QB64 program directory"
+    NO_PROJECT_FILES = -1
+End If
 
 DownloadQBJS
 InitDependencies
@@ -42,7 +47,6 @@ End If
 
 CopyWebDependencies
 ChDir sourceDir
-Print "NO_PROJECT_FILES: " + Str$(NO_PROJECT_FILES)
 If Not NO_PROJECT_FILES Then
     Print "Copying project files..."
     ChDir sourceDir
@@ -86,7 +90,6 @@ Sub ParseArguments
                 End If
             ElseIf Len(larg) > 11 _AndAlso Mid$(larg, 1, 9) = "-WARNINGS" Then
                 WARNING_FILE = Mid$(arg, 11, Len(arg) - 10)
-                Print "WARNING_FILE=[" + WARNING_FILE + "]"
             Else
                 Print "Invalid option: " + arg
                 PrintUsage
@@ -162,32 +165,23 @@ Sub DownloadQBJS
         Print "Download complete."
         Print "Unzipping QBJS..."
         $If WINDOWS Then
-            Shell "cmd.exe /c" + Q$("cd " + _CWD$ + "internal/qbjs/ && tar -xf " + releaseTag + ".zip")
+            Shell "cmd.exe /c" + Q$("cd " + Q$(qbjsParentDir) + " && tar -xf " + releaseTag + ".zip")
         $Else
-            Shell "cd " + _CWD$ + "internal/qbjs/; unzip " + releaseTag + ".zip"
+            Shell "cd " + Q$(qbjsParentDir) + "; unzip " + releaseTag + ".zip"
         $End If
         Print "Unzip complete."
         Print "Deleting zip."
         Kill qbjsParentDir + PathSeparator + releaseTag + ".zip"
-
-        'Print "Compiling webserver..."
-        'Dim ofile As String
-        'ofile = "qbjs-webserver"
-        '$If WINDOWS Then
-        '    ofile = ofile + ".exe"
-        '$End If
-        'Shell "." + PathSeparator + "qb64pe -x " + Q$(qbjsDir + PathSeparator + "tools" + PathSeparator + "webserver.bas") + _
-        '      " -o " + Q$(qbjsDir + PathSeparator + "tools" + PathSeparator + ofile)
     End If
 End Sub
 
 Sub CompileSource
     Dim As String warnings, warningFile
-    destDir = sourceDir + PathSeparator + "_web"
+    destDir = sourceDir + "_web"
 
     If CLEAN _AndAlso _DirExists(destDir) Then
         $If WINDOWS Then
-            Shell "cmd.exe /c " + Q$("rmdir /s /q " + destDir)
+            Shell "cmd.exe /c " + Q$("rmdir /s /q " + Q$(destDir))
         $Else
             Shell "rm -rf " + Q$(destDir)
         $End If
@@ -203,7 +197,7 @@ Sub CompileSource
     Print
     Print "Compiling source file: " + filename + "..."
 
-    Shell "node " + qbjsDir + PathSeparator + "qbc.js " + Q$(sourceFilepath) + " " + Q$(destDir + PathSeparator + "program.js") + "> " + Q$(warningFile)
+    Shell "node " + Q$(qbjsDir + PathSeparator + "qbc.js") + " " + Q$(sourceFilepath) + " " + Q$(destDir + PathSeparator + "program.js") + "> " + Q$(warningFile)
     warnings = ""
     If _FileExists(warningFile) Then warnings = _Trim$(_ReadFile$(warningFile))
     If WARNING_FILE = "" Then
@@ -230,9 +224,9 @@ Sub CopyWebDependencies
         parent = GetParentPath(dependencies(i).dest)
         If parent <> PathSeparator Then If Not _DirExists(destDir + PathSeparator + parent) Then MkDir destDir + PathSeparator + parent
         $If WINDOWS Then
-            Shell "@echo off && cmd.exe /c " + Q$("copy /Y " + qbjsDir + PathSeparator + dependencies(i).src + " " + destDir + PathSeparator + dependencies(i).dest) + " > NUL"
+            Shell "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)) + " > NUL"
         $Else
-            Shell "\cp -f " + qbjsDir + PathSeparator + dependencies(i).src + " " + destDir + PathSeparator + dependencies(i).dest
+            Shell "\cp -f " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)
         $End If
     Next i
 End Sub
@@ -246,7 +240,6 @@ Sub CopyProjectFiles (path As String)
     file = _Files$("")
     Do
         file = _Files$
-        'Print "path: " + path + " | file: " + file
         If _DirExists(file) Then
             If file <> ".." + PathSeparator _AndAlso file <> "." + PathSeparator _AndAlso file <> "_web" + PathSeparator Then
                 i = UBound(dirs) + 1
@@ -257,17 +250,16 @@ Sub CopyProjectFiles (path As String)
             ext = LCase$(GetFileExtension$(file))
             If ext <> "exe" _AndAlso ext <> "bas" Then
                 $If WINDOWS Then
-                    Shell "@echo off && cmd.exe /c " + Q$("copy /Y " + file + " " + destDir + PathSeparator + path + " > NUL")
+                    Shell "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(file) + " " + Q$(destDir + PathSeparator + path) + " > NUL")
                 $Else
-                    Shell "\cp -f " + file + " " + destDir + PathSeparator + path
+                    Shell "\cp -f " + Q$(file) + " " + Q$(destDir + PathSeparator + path)
                 $End If
             End If
         End If
     Loop Until file = ""
 
     For i = 1 To UBound(dirs)
-        Print "cd " + path + dirs(i)
-        'ChDir path + dirs(i)
+        'Print "cd " + path + dirs(i)
         ChDir dirs(i)
         CopyProjectFiles path + dirs(i)
         ChDir ".."
@@ -278,18 +270,13 @@ Sub StartWebserver (url As String)
     Dim webServerDir As String
     webServerDir = qbjsDir + PathSeparator + "tools" + PathSeparator
     If Not TestFile(url) Then
-        'If Not TestFile("http://localhost:" + PORT + "/_croot/" + sourceDir) Then
         Print "Starting http server..."
         ChDir destDir
-        Shell _DontWait "cmd.exe /c " + Q$("title QBJS Web Server && node " + webServerDir + "qbjs-webserver.js " + PORT)
-        '$If WINDOWS Then
-        '   Shell _DontWait "cmd.exe /c " + Q$("title QBJS Web Server && " + qbjsDir + PathSeparator + "tools" + PathSeparator + "qbjs-webserver " + PORT)
-        '$Else
-        '    Shell _DontWait qbjsDir + PathSeparator + "tools" + PathSeparator + "qbjs-webserver " + PORT + " > /dev/null"
-        '$End If
-        'Else
-        '    Dim result As Integer
-        '    result = TestFile("http://localhost:" + PORT + "/_croot/" + sourceDir)
+        $If WINDOWS Then
+            Shell _DontWait "start /min cmd.exe /c " + Q$("title QBJS Web Server && node " + EQ$(webServerDir + "qbjs-webserver.js") + " " + PORT)
+        $Else
+            Shell _DontWait "node " + Q$(webServerDir + "qbjs-webserver.js") + " " + PORT + " &"
+        $End If
     Else
         _WriteFile webServerDir + ".root-path-override", destDir
     End If
@@ -321,6 +308,10 @@ End Function
 
 Function Q$ (text As String)
     Q$ = Chr$(34) + text + Chr$(34)
+End Function
+
+Function EQ$ (text As String)
+    EQ$ = "^" + Chr$(34) + text + "^" + Chr$(34)
 End Function
 
 Function TestFile (url As String)
@@ -437,7 +428,6 @@ Sub InitDependencies
     If Not _FileExists(depfile) Then
         Print "Missing dependencies file:"
         Print depfile
-        'System
     End If
 
     Open depfile For Input As #1
