@@ -1,20 +1,20 @@
-$Console:Only
-Const ERROR_NO_NODEJS = 1, ERROR_NO_NETWORK = 2, ERROR_COMPILE_WARNINGS = 3
-Const ERROR_NO_SOURCE = 4, ERROR_MULTIPLE_SOURCE = 5, ERROR_INVALID_OPTION = 6, ERROR_INVALID_MODE = 7
-Option _Explicit
-Dim Shared As String PORT, MODE, WARNING_FILE, PROGRAM_DIR
-Dim Shared As Integer COMPILE_ONLY, NO_PROJECT_FILES, CLEAN
+$CONSOLE:ONLY
+CONST ERROR_NO_NODEJS = 1, ERROR_NO_NETWORK = 2, ERROR_COMPILE_WARNINGS = 3
+CONST ERROR_NO_SOURCE = 4, ERROR_MULTIPLE_SOURCE = 5, ERROR_INVALID_OPTION = 6, ERROR_INVALID_MODE = 7
+OPTION _EXPLICIT
+DIM SHARED AS STRING PORT, MODE, WARNING_FILE, PROGRAM_DIR
+DIM SHARED AS INTEGER COMPILE_ONLY, NO_PROJECT_FILES, CLEAN
 MODE = "auto"
 PORT = "8080"
 
-Type Dependency
-    As String src
-    As String dest
-End Type
-ReDim Shared dependencies(0) As Dependency
-Dim Shared As String releaseTag, qbjsParentDir, qbjsDir, lastUpdate, destDir
-Dim Shared As String sourceFilepath, filename, sourceDir
-Dim Shared As Integer compileWarnings
+TYPE Dependency
+    AS STRING src
+    AS STRING dest
+END TYPE
+REDIM SHARED dependencies(0) AS Dependency
+DIM SHARED AS STRING releaseTag, qbjsParentDir, qbjsDir, lastUpdate, destDir
+DIM SHARED AS STRING sourceFilepath, filename, sourceDir
+DIM SHARED AS INTEGER compileWarnings
 PROGRAM_DIR = _CWD$
 
 ParseArguments
@@ -24,417 +24,417 @@ GetCurrentRelease
 
 ' Initialize build paths
 qbjsParentDir = _CWD$ + "internal" + PathSeparator + "qbjs"
-qbjsDir = qbjsParentDir + PathSeparator + "qbjs-" + Mid$(releaseTag, 2)
+qbjsDir = qbjsParentDir + PathSeparator + "qbjs-" + MID$(releaseTag, 2)
 filename = GetFilename(sourceFilepath)
 sourceDir = GetParentPath(sourceFilepath)
-If sourceDir = PathSeparator Then sourceDir = _StartDir$
-If Mid$(sourceDir, Len(sourceDir), 1) <> PathSeparator Then sourceDir = sourceDir + PathSeparator
-Print "QB64 Directory:   " + PROGRAM_DIR
-Print "Source Directory: " + sourceDir
-If sourceDir = PROGRAM_DIR Then
-    Print " - Copy project files disabled for QB64 program directory"
+IF sourceDir = PathSeparator THEN sourceDir = _STARTDIR$
+IF MID$(sourceDir, LEN(sourceDir), 1) <> PathSeparator THEN sourceDir = sourceDir + PathSeparator
+PRINT "QB64 Directory:   " + PROGRAM_DIR
+PRINT "Source Directory: " + sourceDir
+IF sourceDir = PROGRAM_DIR THEN
+    PRINT " - Copy project files disabled for QB64 program directory"
     NO_PROJECT_FILES = -1
-End If
+END IF
 
 DownloadQBJS
 InitDependencies
 CompileSource
 
-If COMPILE_ONLY Then
-    If compileWarnings Then System ERROR_COMPILE_WARNINGS
-    System
-End If
+IF COMPILE_ONLY THEN
+    IF compileWarnings THEN SYSTEM ERROR_COMPILE_WARNINGS
+    SYSTEM
+END IF
 
 CopyWebDependencies
-ChDir sourceDir
-If Not NO_PROJECT_FILES Then
-    Print "Copying project files..."
-    ChDir sourceDir
+CHDIR sourceDir
+IF NOT NO_PROJECT_FILES THEN
+    PRINT "Copying project files..."
+    CHDIR sourceDir
     CopyProjectFiles ""
-End If
-Print "Build complete."
+END IF
+PRINT "Build complete."
 
-Dim url As String
+DIM url AS STRING
 url = "http://localhost:" + PORT + "/index.html"
 StartWebserver url
-Print "Launching page..."
+PRINT "Launching page..."
 LaunchURL url$
-If compileWarnings Then System ERROR_COMPILE_WARNINGS
-System
+IF compileWarnings THEN SYSTEM ERROR_COMPILE_WARNINGS
+SYSTEM
 
-Sub ParseArguments
-    Dim As Integer i, scount
-    Dim As String arg, larg
-    For i = 1 To _CommandCount
-        arg = _Trim$(Command$(i))
-        If Mid$(arg, 1, 1) <> "-" Then
+SUB ParseArguments
+    DIM AS INTEGER i, scount
+    DIM AS STRING arg, larg
+    FOR i = 1 TO _COMMANDCOUNT
+        arg = _TRIM$(COMMAND$(i))
+        IF MID$(arg, 1, 1) <> "-" THEN
             sourceFilepath = arg
             scount = scount + 1
-        Else
-            larg = UCase$(arg)
-            If larg = "-COMPILEONLY" Then
+        ELSE
+            larg = UCASE$(arg)
+            IF larg = "-COMPILEONLY" THEN
                 COMPILE_ONLY = -1
-            ElseIf larg = "-NOPROJECTFILES" Then
+            ELSEIF larg = "-NOPROJECTFILES" THEN
                 NO_PROJECT_FILES = -1
-            ElseIf larg = "-CLEAN" Then
+            ELSEIF larg = "-CLEAN" THEN
                 CLEAN = -1
-            ElseIf Len(larg) > 7 _AndAlso Mid$(larg, 1, 5) = "-PORT" Then
-                PORT = Mid$(larg, 7, Len(larg) - 6)
-            ElseIf Len(larg) > 7 _AndAlso Mid$(larg, 1, 5) = "-MODE" Then
-                MODE = LCase$(Mid$(larg, 7, Len(larg) - 6))
-                If MODE <> "auto" _AndAlso MODE <> "play" Then
-                    Print "Invalid mode option: " + arg
-                    Print "Valid modes are auto or play"
+            ELSEIF LEN(larg) > 7 _ANDALSO MID$(larg, 1, 5) = "-PORT" THEN
+                PORT = MID$(larg, 7, LEN(larg) - 6)
+            ELSEIF LEN(larg) > 7 _ANDALSO MID$(larg, 1, 5) = "-MODE" THEN
+                MODE = LCASE$(MID$(larg, 7, LEN(larg) - 6))
+                IF MODE <> "auto" _ANDALSO MODE <> "play" THEN
+                    PRINT "Invalid mode option: " + arg
+                    PRINT "Valid modes are auto or play"
                     PrintUsage
-                    System ERROR_INVALID_MODE
-                End If
-            ElseIf Len(larg) > 11 _AndAlso Mid$(larg, 1, 9) = "-WARNINGS" Then
-                WARNING_FILE = Mid$(arg, 11, Len(arg) - 10)
-            Else
-                Print "Invalid option: " + arg
+                    SYSTEM ERROR_INVALID_MODE
+                END IF
+            ELSEIF LEN(larg) > 11 _ANDALSO MID$(larg, 1, 9) = "-WARNINGS" THEN
+                WARNING_FILE = MID$(arg, 11, LEN(arg) - 10)
+            ELSE
+                PRINT "Invalid option: " + arg
                 PrintUsage
-                System ERROR_INVALID_OPTION
-            End If
-        End If
-    Next i
-    If sourceFilepath = "" Then
-        Print "No source file specified."
+                SYSTEM ERROR_INVALID_OPTION
+            END IF
+        END IF
+    NEXT i
+    IF sourceFilepath = "" THEN
+        PRINT "No source file specified."
         PrintUsage
-        System ERROR_NO_SOURCE
-    End If
-    If scount > 1 Then
-        Print "More than one source file specified."
+        SYSTEM ERROR_NO_SOURCE
+    END IF
+    IF scount > 1 THEN
+        PRINT "More than one source file specified."
         PrintUsage
-        System ERROR_MULTIPLE_SOURCE
-    End If
-End Sub
+        SYSTEM ERROR_MULTIPLE_SOURCE
+    END IF
+END SUB
 
-Sub PrintUsage
-    Print
-    Print "USAGE:"
-    Print
-    Print "qbjs-build source-filename.bas [-port:8080] [-mode:auto|play] [-compileOnly] [-noProjectFiles] [-clean]"
-End Sub
+SUB PrintUsage
+    PRINT
+    PRINT "USAGE:"
+    PRINT
+    PRINT "qbjs-build source-filename.bas [-port:8080] [-mode:auto|play] [-compileOnly] [-noProjectFiles] [-clean]"
+END SUB
 
-Sub ReadConfig
+SUB ReadConfig
     ' Read release version and last update information
-    If _FileExists(_CWD$ + ".qbjs") Then
-        Open _CWD$ + ".qbjs" For Input As #1
-        Input #1, releaseTag, lastUpdate
-        Close #1
-    End If
-End Sub
+    IF _FILEEXISTS(_CWD$ + ".qbjs") THEN
+        OPEN _CWD$ + ".qbjs" FOR INPUT AS #1
+        INPUT #1, releaseTag, lastUpdate
+        CLOSE #1
+    END IF
+END SUB
 
-Sub GetCurrentRelease
-    Dim As String text, searchStr
-    Dim As Integer sidx, eidx
+SUB GetCurrentRelease
+    DIM AS STRING text, searchStr
+    DIM AS INTEGER sidx, eidx
     ' We probably don't need to check for new QBJS versions more than once per day
-    If lastUpdate <> Date$ Then
+    IF lastUpdate <> DATE$ THEN
         ' Lookup current release
-        Print "Checking current QBJS release version..."
+        PRINT "Checking current QBJS release version..."
         ' If the _OpenClient method supports setting the User-Agent header in the future,
         ' the following URL would be preferred to lookup this information:
         ' https://api.github.com/repos/boxgaming/qbjs/releases/latest
-        If DownloadFile("https://github.com/boxgaming/qbjs/releases/latest", "_qbjs_releases.txt") = 200 Then
-            Print
-            text = _ReadFile$("_qbjs_releases.txt")
-            Kill "_qbjs_releases.txt"
+        IF DownloadFile("https://github.com/boxgaming/qbjs/releases/latest", "_qbjs_releases.txt") = 200 THEN
+            PRINT
+            text = _READFILE$("_qbjs_releases.txt")
+            KILL "_qbjs_releases.txt"
             searchStr = "/boxgaming/qbjs/releases/tag/"
-            sidx = InStr(text, searchStr) + Len(searchStr)
-            eidx = InStr(sidx, text$, Chr$(34))
-            releaseTag = Mid$(text, sidx, eidx - sidx)
+            sidx = INSTR(text, searchStr) + LEN(searchStr)
+            eidx = INSTR(sidx, text$, CHR$(34))
+            releaseTag = MID$(text, sidx, eidx - sidx)
             ' Save the current release information
-            Open _CWD$ + ".qbjs" For Output As #1
-            Write #1, releaseTag, Date$
-            Close #1
-        ElseIf releaseTag = "" Then
-            Print "Unable to access QBJS repository, check network access."
-            System ERROR_NO_NETWORK
-        End If
-    End If
-    Print "QBJS Web Build:   " + releaseTag
-End Sub
+            OPEN _CWD$ + ".qbjs" FOR OUTPUT AS #1
+            WRITE #1, releaseTag, DATE$
+            CLOSE #1
+        ELSEIF releaseTag = "" THEN
+            PRINT "Unable to access QBJS repository, check network access."
+            SYSTEM ERROR_NO_NETWORK
+        END IF
+    END IF
+    PRINT "QBJS Web Build:   " + releaseTag
+END SUB
 
-Sub DownloadQBJS
-    If Not _DirExists(qbjsDir) Then
+SUB DownloadQBJS
+    IF NOT _DIREXISTS(qbjsDir) THEN
         ' Install QBJS
-        If Not _DirExists(qbjsParentDir) Then MkDir qbjsParentDir
+        IF NOT _DIREXISTS(qbjsParentDir) THEN MKDIR qbjsParentDir
 
-        Print "Downloading QBJS " + releaseTag + "...";
-        Print DownloadFile("https://codeload.github.com/boxgaming/qbjs/zip/refs/tags/" + releaseTag, qbjsParentDir + PathSeparator + releaseTag + ".zip")
-        Print "Download complete."
-        Print "Unzipping QBJS..."
-        $If WINDOWS Then
-            Shell "cmd.exe /c" + Q$("cd " + Q$(qbjsParentDir) + " && tar -xf " + releaseTag + ".zip")
-        $Else
+        PRINT "Downloading QBJS " + releaseTag + "...";
+        PRINT DownloadFile("https://codeload.github.com/boxgaming/qbjs/zip/refs/tags/" + releaseTag, qbjsParentDir + PathSeparator + releaseTag + ".zip")
+        PRINT "Download complete."
+        PRINT "Unzipping QBJS..."
+        $IF WINDOWS THEN
+            SHELL "cmd.exe /c" + Q$("cd " + Q$(qbjsParentDir) + " && tar -xf " + releaseTag + ".zip")
+        $ELSE
             Shell "cd " + Q$(qbjsParentDir) + "; unzip " + releaseTag + ".zip"
-        $End If
-        Print "Unzip complete."
-        Print "Deleting zip."
-        Kill qbjsParentDir + PathSeparator + releaseTag + ".zip"
-    End If
-End Sub
+        $END IF
+        PRINT "Unzip complete."
+        PRINT "Deleting zip."
+        KILL qbjsParentDir + PathSeparator + releaseTag + ".zip"
+    END IF
+END SUB
 
-Sub CompileSource
-    Dim As String warnings, warningFile
+SUB CompileSource
+    DIM AS STRING warnings, warningFile
     destDir = sourceDir + "_web"
 
-    If CLEAN _AndAlso _DirExists(destDir) Then
-        $If WINDOWS Then
-            Shell "cmd.exe /c " + Q$("rmdir /s /q " + Q$(destDir))
-        $Else
+    IF CLEAN _ANDALSO _DIREXISTS(destDir) THEN
+        $IF WINDOWS THEN
+            SHELL "cmd.exe /c " + Q$("rmdir /s /q " + Q$(destDir))
+        $ELSE
             Shell "rm -rf " + Q$(destDir)
-        $End If
-    End If
+        $END IF
+    END IF
 
     warningFile = "_qbjs_warnings.txt"
-    If WARNING_FILE <> "" Then warningFile = PROGRAM_DIR + WARNING_FILE
+    IF WARNING_FILE <> "" THEN warningFile = PROGRAM_DIR + WARNING_FILE
 
-    If Not _DirExists(destDir) Then MkDir destDir
-    ChDir sourceDir
+    IF NOT _DIREXISTS(destDir) THEN MKDIR destDir
+    CHDIR sourceDir
 
-    If _FileExists(warningFile) Then Kill warningFile
-    Print
-    Print "Compiling source file: " + filename + "..."
+    IF _FILEEXISTS(warningFile) THEN KILL warningFile
+    PRINT
+    PRINT "Compiling source file: " + filename + "..."
 
-    Shell "node " + Q$(qbjsDir + PathSeparator + "qbc.js") + " " + Q$(sourceFilepath) + " " + Q$(destDir + PathSeparator + "program.js") + "> " + Q$(warningFile)
+    SHELL "node " + Q$(qbjsDir + PathSeparator + "qbc.js") + " " + Q$(sourceFilepath) + " " + Q$(destDir + PathSeparator + "program.js") + "> " + Q$(warningFile)
     warnings = ""
-    If _FileExists(warningFile) Then warnings = _Trim$(_ReadFile$(warningFile))
-    If WARNING_FILE = "" Then
-        If _FileExists(warningFile) Then Kill warningFile
-    End If
-    If warnings = "" Then
+    IF _FILEEXISTS(warningFile) THEN warnings = _TRIM$(_READFILE$(warningFile))
+    IF WARNING_FILE = "" THEN
+        IF _FILEEXISTS(warningFile) THEN KILL warningFile
+    END IF
+    IF warnings = "" THEN
         warnings = "Compiled successfully with no errors or warnings"
-        If _FileExists(warningFile) Then Kill warningFile
-    Else
+        IF _FILEEXISTS(warningFile) THEN KILL warningFile
+    ELSE
         compileWarnings = -1
-    End If
-    Print "-----------------------------------------------------------------------------"
-    Print warnings
-    Print "-----------------------------------------------------------------------------"
-    If InStr(warnings, "ERROR:") Then System ERROR_COMPILE_WARNINGS
-End Sub
+    END IF
+    PRINT "-----------------------------------------------------------------------------"
+    PRINT warnings
+    PRINT "-----------------------------------------------------------------------------"
+    IF INSTR(warnings, "ERROR:") THEN SYSTEM ERROR_COMPILE_WARNINGS
+END SUB
 
-Sub CopyWebDependencies
-    Dim i As Integer
-    Dim parent As String
+SUB CopyWebDependencies
+    DIM i AS INTEGER
+    DIM parent AS STRING
 
-    Print "Copy web dependencies..."
-    For i = 1 To UBound(dependencies)
+    PRINT "Copy web dependencies..."
+    FOR i = 1 TO UBOUND(dependencies)
         parent = GetParentPath(dependencies(i).dest)
-        If parent <> PathSeparator Then If Not _DirExists(destDir + PathSeparator + parent) Then MkDir destDir + PathSeparator + parent
-        $If WINDOWS Then
-            Shell "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)) + " > NUL"
-        $Else
+        IF parent <> PathSeparator THEN IF NOT _DIREXISTS(destDir + PathSeparator + parent) THEN MKDIR destDir + PathSeparator + parent
+        $IF WINDOWS THEN
+            SHELL "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)) + " > NUL"
+        $ELSE
             Shell "\cp -f " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)
-        $End If
-    Next i
-End Sub
+        $END IF
+    NEXT i
+END SUB
 
-Sub CopyProjectFiles (path As String)
-    Dim i As Integer
-    Dim As String file, ext
+SUB CopyProjectFiles (path AS STRING)
+    DIM i AS INTEGER
+    DIM AS STRING file, ext
 
-    ReDim dirs(0) As String
-    If Not _DirExists(destDir + PathSeparator + path) Then MkDir destDir + PathSeparator + path
-    file = _Files$("")
-    Do
-        file = _Files$
-        If _DirExists(file) Then
-            If file <> ".." + PathSeparator _AndAlso file <> "." + PathSeparator _AndAlso file <> "_web" + PathSeparator Then
-                i = UBound(dirs) + 1
-                ReDim _Preserve dirs(i) As String
+    REDIM dirs(0) AS STRING
+    IF NOT _DIREXISTS(destDir + PathSeparator + path) THEN MKDIR destDir + PathSeparator + path
+    file = _FILES$("")
+    DO
+        file = _FILES$
+        IF _DIREXISTS(file) THEN
+            IF file <> ".." + PathSeparator _ANDALSO file <> "." + PathSeparator _ANDALSO file <> "_web" + PathSeparator THEN
+                i = UBOUND(dirs) + 1
+                REDIM _PRESERVE dirs(i) AS STRING
                 dirs(i) = file
-            End If
-        ElseIf file <> "" Then
-            ext = LCase$(GetFileExtension$(file))
-            If ext <> "exe" _AndAlso ext <> "bas" Then
-                $If WINDOWS Then
-                    Shell "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(file) + " " + Q$(destDir + PathSeparator + path) + " > NUL")
-                $Else
+            END IF
+        ELSEIF file <> "" THEN
+            ext = LCASE$(GetFileExtension$(file))
+            IF ext <> "exe" _ANDALSO ext <> "bas" THEN
+                $IF WINDOWS THEN
+                    SHELL "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(file) + " " + Q$(destDir + PathSeparator + path) + " > NUL")
+                $ELSE
                     Shell "\cp -f " + Q$(file) + " " + Q$(destDir + PathSeparator + path)
-                $End If
-            End If
-        End If
-    Loop Until file = ""
+                $END IF
+            END IF
+        END IF
+    LOOP UNTIL file = ""
 
-    For i = 1 To UBound(dirs)
+    FOR i = 1 TO UBOUND(dirs)
         'Print "cd " + path + dirs(i)
-        ChDir dirs(i)
+        CHDIR dirs(i)
         CopyProjectFiles path + dirs(i)
-        ChDir ".."
-    Next i
-End Sub
+        CHDIR ".."
+    NEXT i
+END SUB
 
-Sub StartWebserver (url As String)
-    Dim webServerDir As String
+SUB StartWebserver (url AS STRING)
+    DIM webServerDir AS STRING
     webServerDir = qbjsDir + PathSeparator + "tools" + PathSeparator
-    If Not TestFile(url) Then
-        Print "Starting http server..."
-        ChDir destDir
-        $If WINDOWS Then
-            Shell _DontWait "start /min cmd.exe /c " + Q$("title QBJS Web Server && node " + EQ$(webServerDir + "qbjs-webserver.js") + " " + PORT)
-        $Else
+    IF NOT TestFile(url) THEN
+        PRINT "Starting http server..."
+        CHDIR destDir
+        $IF WINDOWS THEN
+            SHELL _DONTWAIT "start /min cmd.exe /c " + Q$("title QBJS Web Server && node " + EQ$(webServerDir + "qbjs-webserver.js") + " " + PORT)
+        $ELSE
             Shell _DontWait "node " + Q$(webServerDir + "qbjs-webserver.js") + " " + PORT + " &"
-        $End If
-    Else
-        _WriteFile webServerDir + ".root-path-override", destDir
-    End If
-End Sub
+        $END IF
+    ELSE
+        _WRITEFILE webServerDir + ".root-path-override", destDir
+    END IF
+END SUB
 
-Sub CheckNodeJS
-    Dim nodeVersion As String
-    Shell "node --version > __nodeout.txt 2>&1"
-    nodeVersion = _Trim$(_ReadFile$("__nodeout.txt"))
-    nodeVersion = Replace$(nodeVersion, Chr$(10), "")
-    nodeVersion = Replace$(nodeVersion, Chr$(13), "")
-    Kill "__nodeout.txt"
-    If Mid$(nodeVersion, 1, 1) <> "v" Then
+SUB CheckNodeJS
+    DIM nodeVersion AS STRING
+    SHELL "node --version > __nodeout.txt 2>&1"
+    nodeVersion = _TRIM$(_READFILE$("__nodeout.txt"))
+    nodeVersion = Replace$(nodeVersion, CHR$(10), "")
+    nodeVersion = Replace$(nodeVersion, CHR$(13), "")
+    KILL "__nodeout.txt"
+    IF MID$(nodeVersion, 1, 1) <> "v" THEN
         nodeVersion = ""
-        Print "node.js not detected."
-        Print "Please ensure that node.js is installed and is in the system path."
+        PRINT "node.js not detected."
+        PRINT "Please ensure that node.js is installed and is in the system path."
         LaunchURL "https://nodejs.org/en/download"
-        System ERROR_NO_NODEJS
-    End If
+        SYSTEM ERROR_NO_NODEJS
+    END IF
 
-    Print "NodeJS Version:   " + nodeVersion
-End Sub
+    PRINT "NodeJS Version:   " + nodeVersion
+END SUB
 
-Function GetFileExtension$ (filename As String)
-    Dim i As Integer
-    i = _InStrRev(filename, ".")
-    GetFileExtension = Mid$(filename, i + 1)
-End Function
+FUNCTION GetFileExtension$ (filename AS STRING)
+    DIM i AS INTEGER
+    i = _INSTRREV(filename, ".")
+    GetFileExtension = MID$(filename, i + 1)
+END FUNCTION
 
-Function Q$ (text As String)
-    Q$ = Chr$(34) + text + Chr$(34)
-End Function
+FUNCTION Q$ (text AS STRING)
+    Q$ = CHR$(34) + text + CHR$(34)
+END FUNCTION
 
-Function EQ$ (text As String)
-    EQ$ = "^" + Chr$(34) + text + "^" + Chr$(34)
-End Function
+FUNCTION EQ$ (text AS STRING)
+    EQ$ = "^" + CHR$(34) + text + "^" + CHR$(34)
+END FUNCTION
 
-Function TestFile (url As String)
-    Dim result As Integer
-    Dim h As Long
-    h = _OpenClient(url)
-    If h Then
-        If _StatusCode(h) = 200 Then result = -1
-        Close #h
-    End If
+FUNCTION TestFile (url AS STRING)
+    DIM result AS INTEGER
+    DIM h AS LONG
+    h = _OPENCLIENT(url)
+    IF h THEN
+        IF _STATUSCODE(h) = 200 THEN result = -1
+        CLOSE #h
+    END IF
     TestFile = result
-End Function
+END FUNCTION
 
-Function DownloadFile (url As String, filename As String)
-    Dim h As Long, content As String, s As String
-    Dim As Integer statusCode
+FUNCTION DownloadFile (url AS STRING, filename AS STRING)
+    DIM h AS LONG, content AS STRING, s AS STRING
+    DIM AS INTEGER statusCode
 
-    h = _OpenClient(url)
+    h = _OPENCLIENT(url)
 
-    If h Then
-        Open filename For Binary As #1
-        statusCode = _StatusCode(h)
+    IF h THEN
+        OPEN filename FOR BINARY AS #1
+        statusCode = _STATUSCODE(h)
 
-        While Not EOF(h)
-            _Limit 60
-            Get #h, , s
-            Put #1, , s
-            Print ".";
-        Wend
+        WHILE NOT EOF(h)
+            _LIMIT 60
+            GET #h, , s
+            PUT #1, , s
+            PRINT ".";
+        WEND
 
-        Close #h
-        Close #1
-    End If
+        CLOSE #h
+        CLOSE #1
+    END IF
 
     DownloadFile = statusCode
-End Function
+END FUNCTION
 
-Sub LaunchURL (url As String)
-    $If WIN Then
-        Shell _DontWait _Hide "start " + url
-    $ElseIf MAC Then
+SUB LaunchURL (url AS STRING)
+    $IF WIN THEN
+        SHELL _DONTWAIT _HIDE "start " + url
+    $ELSEIF MAC THEN
         Shell _DontWait _Hide "open " + url
-    $ElseIf LINUX Then
+    $ELSEIF LINUX THEN
         Shell _DontWait _Hide "xdg-open " + url
-    $End If
-End Sub
+    $END IF
+END SUB
 
-Function GetFilename$ (filepath As String)
-    Dim s As String, i As Integer
+FUNCTION GetFilename$ (filepath AS STRING)
+    DIM s AS STRING, i AS INTEGER
     s = filepath
     s = Replace(s, "\", "/")
-    i = _InStrRev(s, "/")
-    s = Mid$(s, i + 1)
+    i = _INSTRREV(s, "/")
+    s = MID$(s, i + 1)
     GetFilename = s
-End Function
+END FUNCTION
 
-Function GetParentPath$ (filepath As String)
-    Dim s As String, i As Integer
+FUNCTION GetParentPath$ (filepath AS STRING)
+    DIM s AS STRING, i AS INTEGER
     s = filepath
     s = Replace(s, "\", "/")
-    i = _InStrRev(s, "/")
-    s = Mid$(s, 1, i - 1)
+    i = _INSTRREV(s, "/")
+    s = MID$(s, 1, i - 1)
     s = Replace(s, "/", PathSeparator)
-    If s = "" Then s = PathSeparator
+    IF s = "" THEN s = PathSeparator
     GetParentPath = s
-End Function
+END FUNCTION
 
-Function PathSeparator$ ()
-    $If WINDOWS Then
+FUNCTION PathSeparator$ ()
+    $IF WINDOWS THEN
         PathSeparator = "\"
-    $Else
+    $ELSE
         PathSeparator = "/"
-    $End If
-End Function
+    $END IF
+END FUNCTION
 
-Function Replace$ (s As String, searchString As String, newString As String)
-    Dim ns As String
-    Dim i As Integer
+FUNCTION Replace$ (s AS STRING, searchString AS STRING, newString AS STRING)
+    DIM ns AS STRING
+    DIM i AS INTEGER
 
-    Dim slen As Integer
-    slen = Len(searchString)
+    DIM slen AS INTEGER
+    slen = LEN(searchString)
 
-    For i = 1 To Len(s) '- slen + 1
-        If Mid$(s, i, slen) = searchString Then
+    FOR i = 1 TO LEN(s) '- slen + 1
+        IF MID$(s, i, slen) = searchString THEN
             ns = ns + newString
             i = i + slen - 1
-        Else
-            ns = ns + Mid$(s, i, 1)
-        End If
-    Next i
+        ELSE
+            ns = ns + MID$(s, i, 1)
+        END IF
+    NEXT i
 
     Replace = ns
-End Function
+END FUNCTION
 
-Sub AddDependency (src As String, dest As String)
-    Dim i As Integer
-    i = UBound(dependencies) + 1
-    ReDim _Preserve dependencies(i) As Dependency
-    $If WINDOWS Then
+SUB AddDependency (src AS STRING, dest AS STRING)
+    DIM i AS INTEGER
+    i = UBOUND(dependencies) + 1
+    REDIM _PRESERVE dependencies(i) AS Dependency
+    $IF WINDOWS THEN
         src = Replace$(src, "/", "\")
         dest = Replace$(dest, "/", "\")
-    $End If
+    $END IF
     dependencies(i).src = src
     dependencies(i).dest = dest
-End Sub
+END SUB
 
-Sub InitDependencies
-    Dim As String depfile, src, dest
+SUB InitDependencies
+    DIM AS STRING depfile, src, dest
 
-    ReDim dependencies(0) As Dependency
+    REDIM dependencies(0) AS Dependency
     AddDependency "export/" + MODE + ".html", "index.html"
 
     depfile = qbjsDir + PathSeparator + "export" + PathSeparator + "dependencies.txt"
-    If Not _FileExists(depfile) Then
-        Print "Missing dependencies file:"
-        Print depfile
-    End If
+    IF NOT _FILEEXISTS(depfile) THEN
+        PRINT "Missing dependencies file:"
+        PRINT depfile
+    END IF
 
-    Open depfile For Input As #1
-    Input #1, src, dest
-    While Not EOF(1)
+    OPEN depfile FOR INPUT AS #1
+    INPUT #1, src, dest
+    WHILE NOT EOF(1)
         AddDependency src, dest
-        Input #1, src, dest
-    Wend
-    Close #1
-End Sub
+        INPUT #1, src, dest
+    WEND
+    CLOSE #1
+END SUB
