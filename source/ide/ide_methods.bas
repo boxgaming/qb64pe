@@ -14202,22 +14202,22 @@ SUB ideQBJSBuildBox
         skipEvents = 0
         IF webBuildStatus$ = "Compiling qbjs-build tool..." THEN
             IF INSTR(_OS$, "WIN") > 0 THEN
-                SHELL _HIDE Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal\support\converter\qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build.exe" + Q$
+                SHELL _HIDE Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal\support\converter\qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "internal\support\converter\qbjs-build.exe" + Q$
             ELSE
-                SHELL Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal/support/converter/qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "qbjs-build" + Q$
+                SHELL Q$ + _CWD$ + "qb64pe" + Q$ + " -x " + Q$ + _CWD$ + "internal/support/converter/qbjs-build.bas" + Q$ + " -o " + Q$ + _CWD$ + "internal/support/converter/qbjs-build" + Q$
             END IF
             webBuildStatus$ = "Building..."
             skipEvents = 1
 
         ELSEIF webBuildStatus$ = "Building..." Then
-            qbjsWarningFile$ = ".qbjs-warnings.txt"
-            IF _FILEEXISTS(_CWD$ + qbjsWarningFile$) THEN KILL _CWD$ + qbjsWarningFile$
-            qbjsOpts$ = "-port:" + qbjsPort$ + " -warnings:" + qbjsWarningFile$
+            qbjsWarningFile$ = _CWD$ + ".qbjs-warnings-" + _TRIM$(STR$(TIMER))
+            IF _FILEEXISTS(qbjsWarningFile$) THEN KILL qbjsWarningFile$
+            qbjsOpts$ = "-port:" + qbjsPort$ + " " + Q$ + "-warnings:" + qbjsWarningFile$ + Q$
             IF compileOnly$ = "1" THEN qbjsOpts$ = qbjsOpts$ + " -compileOnly"
             IF copyProjectFiles$ = "0" THEN qbjsOpts$ = qbjsOpts$ + " -noProjectFiles"
 
             ' Save a temp copy of the file
-            tempSrcFile$ = idepath$ + idepathsep$ + "__temp_qbjs.bas"
+            tempSrcFile$ = idepath$ + idepathsep$ + ".qbjs-temp.bas"
             IF _FILEEXISTS(tempSrcFile$) THEN KILL tempSrcFile$
             OPEN tempSrcFile$ FOR BINARY AS #150
             IF INSTR(_OS$, "WIN") THEN LineEnding$ = CHR$(13) + CHR$(10) ELSE LineEnding$ = CHR$(10)
@@ -14227,9 +14227,9 @@ SUB ideQBJSBuildBox
             NEXT
             CLOSE #150
             IF INSTR(_OS$, "WIN") > 0 THEN
-                SHELL _HIDE "cmd.exe /c " + Q$ + Q$ + _CWD$ + "qbjs-build" + Q$ + " " + qbjsOpts$ + " " + EQ$ + tempSrcFile$ + EQ$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + " & call echo %^errorlevel% > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$ + Q$
+                SHELL _HIDE "cmd.exe /c " + Q$ + Q$ + _CWD$ + "internal\support\converter\qbjs-build" + Q$ + " " + qbjsOpts$ + " " + EQ$ + tempSrcFile$ + EQ$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + " & call echo %^errorlevel% > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$ + Q$
             ELSE
-                SHELL Q$ + _CWD$ + "qbjs-build" + Q$ + " " + qbjsOpts$ + " " + Q$ + tempSrcFile$ + Q$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + ";  echo $? > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$
+                SHELL Q$ + _CWD$ + "internal/support/converter/qbjs-build" + Q$ + " " + qbjsOpts$ + " " + Q$ + tempSrcFile$ + Q$ + " > " + Q$ + _CWD$ + ".qbjs-build-out" + Q$ + ";  echo $? > " + Q$ + _CWD$ + ".qbjs-exit-code" + Q$
             END IF
             exitCode = 0
             IF _FILEEXISTS(_CWD$ + ".qbjs-exit-code") THEN
@@ -14309,9 +14309,9 @@ SUB ideQBJSBuildBox
             ' Detect qbjs-build tool
             qbjsBuildExists = -1
             IF INSTR(_OS$, "WIN") > 0 THEN
-                IF NOT _FILEEXISTS(_CWD$ + "qbjs-build.exe") THEN qbjsBuildExists = 0
+                IF NOT _FILEEXISTS(_CWD$ + "internal\support\converter\qbjs-build.exe") THEN qbjsBuildExists = 0
             ELSE
-                If NOT _FILEEXISTS(_CWD$ + "qbjs-build") THEN qbjsBuildExists = 0
+                If NOT _FILEEXISTS(_CWD$ + "internal/support/converter/qbjs-build") THEN qbjsBuildExists = 0
             END IF
 
             IF NOT qbjsBuildExists THEN
@@ -14343,8 +14343,8 @@ SUB ideQBJSBuildBox
 UpdateWarnings:
     qbjsErrors$ = ""
     REDIM errorLines(0) AS STRING
-    IF _FILEEXISTS(_CWD$ + ".qbjs-warnings.txt") THEN
-        Open _CWD$ + ".qbjs-warnings.txt" FOR INPUT AS #150
+    IF _FILEEXISTS(qbjsWarningFile$) THEN
+        Open qbjsWarningFile$ FOR INPUT AS #150
         DO
             LINE INPUT #150, eline$
             IF _Trim$(eline$) <> "" THEN
@@ -14356,7 +14356,7 @@ UpdateWarnings:
             END IF
         LOOP UNTIL EOF(150)
         CLOSE #150
-        KILL _CWD$ + ".qbjs-warnings.txt"
+        KILL qbjsWarningFile$
     END IF
     IF UBound(errorLines) < 1 THEN
         idetxt$(o(warningsLst).txt) = "-- Build completed with no errors or warnings --"

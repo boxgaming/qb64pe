@@ -2,7 +2,7 @@ $CONSOLE:ONLY
 CONST ERROR_NO_NODEJS = 1, ERROR_NO_NETWORK = 2, ERROR_COMPILE_WARNINGS = 3
 CONST ERROR_NO_SOURCE = 4, ERROR_MULTIPLE_SOURCE = 5, ERROR_INVALID_OPTION = 6, ERROR_INVALID_MODE = 7
 OPTION _EXPLICIT
-DIM SHARED AS STRING PORT, MODE, WARNING_FILE, PROGRAM_DIR
+DIM SHARED AS STRING PORT, MODE, WARNING_FILE, PROGRAM_DIR, QB64_DIR
 DIM SHARED AS INTEGER COMPILE_ONLY, NO_PROJECT_FILES, CLEAN
 MODE = "auto"
 PORT = "8080"
@@ -16,6 +16,7 @@ DIM SHARED AS STRING releaseTag, qbjsParentDir, qbjsDir, lastUpdate, destDir
 DIM SHARED AS STRING sourceFilepath, filename, sourceDir
 DIM SHARED AS INTEGER compileWarnings
 PROGRAM_DIR = _CWD$
+QB64_DIR = QB64ProgramDirectory
 
 ParseArguments
 CheckNodeJS
@@ -23,15 +24,16 @@ ReadConfig
 GetCurrentRelease
 
 ' Initialize build paths
-qbjsParentDir = _CWD$ + "internal" + PathSeparator + "qbjs"
+qbjsParentDir = _CWD$ + ".qbjs"
 qbjsDir = qbjsParentDir + PathSeparator + "qbjs-" + MID$(releaseTag, 2)
 filename = GetFilename(sourceFilepath)
 sourceDir = GetParentPath(sourceFilepath)
 IF sourceDir = PathSeparator THEN sourceDir = _STARTDIR$
 IF MID$(sourceDir, LEN(sourceDir), 1) <> PathSeparator THEN sourceDir = sourceDir + PathSeparator
-PRINT "QB64 Directory:   " + PROGRAM_DIR
-PRINT "Source Directory: " + sourceDir
-IF sourceDir = PROGRAM_DIR THEN
+PRINT "Program Directory: " + PROGRAM_DIR
+PRINT "QB64 Directory:    " + QB64_DIR
+PRINT "Source Directory:  " + sourceDir
+IF sourceDir = QB64_DIR THEN
     PRINT " - Copy project files disabled for QB64 program directory"
     NO_PROJECT_FILES = -1
 END IF
@@ -61,6 +63,10 @@ PRINT "Launching page..."
 LaunchURL url$
 IF compileWarnings THEN SYSTEM ERROR_COMPILE_WARNINGS
 SYSTEM
+
+FUNCTION QB64ProgramDirectory$
+    QB64ProgramDirectory$ = GetParentPath(GetParentPath(GetParentPath(GetParentPath(_CWD$)))) + PathSeparator
+END FUNCTION
 
 SUB ParseArguments
     DIM AS INTEGER i, scount
@@ -118,8 +124,8 @@ END SUB
 
 SUB ReadConfig
     ' Read release version and last update information
-    IF _FILEEXISTS(_CWD$ + ".qbjs") THEN
-        OPEN _CWD$ + ".qbjs" FOR INPUT AS #1
+    IF _FILEEXISTS(_CWD$ + ".qbjs-config") THEN
+        OPEN _CWD$ + ".qbjs-config" FOR INPUT AS #1
         INPUT #1, releaseTag, lastUpdate
         CLOSE #1
     END IF
@@ -135,16 +141,16 @@ SUB GetCurrentRelease
         ' If the _OpenClient method supports setting the User-Agent header in the future,
         ' the following URL would be preferred to lookup this information:
         ' https://api.github.com/repos/boxgaming/qbjs/releases/latest
-        IF DownloadFile("https://github.com/boxgaming/qbjs/releases/latest", "_qbjs_releases.txt") = 200 THEN
+        IF DownloadFile("https://github.com/boxgaming/qbjs/releases/latest", ".qbjs_releases") = 200 THEN
             PRINT
-            text = _READFILE$("_qbjs_releases.txt")
-            KILL "_qbjs_releases.txt"
+            text = _READFILE$(".qbjs_releases")
+            KILL ".qbjs_releases"
             searchStr = "/boxgaming/qbjs/releases/tag/"
             sidx = INSTR(text, searchStr) + LEN(searchStr)
             eidx = INSTR(sidx, text$, CHR$(34))
             releaseTag = MID$(text, sidx, eidx - sidx)
             ' Save the current release information
-            OPEN _CWD$ + ".qbjs" FOR OUTPUT AS #1
+            OPEN _CWD$ + ".qbjs-config" FOR OUTPUT AS #1
             WRITE #1, releaseTag, DATE$
             CLOSE #1
         ELSEIF releaseTag = "" THEN
@@ -152,7 +158,7 @@ SUB GetCurrentRelease
             SYSTEM ERROR_NO_NETWORK
         END IF
     END IF
-    PRINT "QBJS Web Build:   " + releaseTag
+    PRINT "QBJS Web Build:    " + releaseTag
 END SUB
 
 SUB DownloadQBJS
@@ -187,8 +193,9 @@ SUB CompileSource
         $END IF
     END IF
 
-    warningFile = "_qbjs_warnings.txt"
-    IF WARNING_FILE <> "" THEN warningFile = PROGRAM_DIR + WARNING_FILE
+    warningFile = PROGRAM_DIR + ".qbjs-warnings-" + _TRIM$(STR$(TIMER))
+    IF WARNING_FILE <> "" THEN warningFile = WARNING_FILE
+    PRINT "Warning File:      " + warningFile
 
     IF NOT _DIREXISTS(destDir) THEN MKDIR destDir
     CHDIR sourceDir
@@ -284,11 +291,11 @@ END SUB
 
 SUB CheckNodeJS
     DIM nodeVersion AS STRING
-    SHELL "node --version > __nodeout.txt 2>&1"
-    nodeVersion = _TRIM$(_READFILE$("__nodeout.txt"))
+    SHELL "node --version > .qbjs-node-out 2>&1"
+    nodeVersion = _TRIM$(_READFILE$(".qbjs-node-out"))
     nodeVersion = Replace$(nodeVersion, CHR$(10), "")
     nodeVersion = Replace$(nodeVersion, CHR$(13), "")
-    KILL "__nodeout.txt"
+    KILL ".qbjs-node-out"
     IF MID$(nodeVersion, 1, 1) <> "v" THEN
         nodeVersion = ""
         PRINT "node.js not detected."
@@ -297,7 +304,7 @@ SUB CheckNodeJS
         SYSTEM ERROR_NO_NODEJS
     END IF
 
-    PRINT "NodeJS Version:   " + nodeVersion
+    PRINT "NodeJS Version:    " + nodeVersion
 END SUB
 
 FUNCTION GetFileExtension$ (filename AS STRING)

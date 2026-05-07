@@ -10,6 +10,7 @@ internal/help
 internal/qbjs
 !internal/support/**
 internal/commit.txt
+internal/support/converter/*.exe
 tempfoldersearch.bin
 internal/c/qbx[2-9].cpp
 *.ttf
