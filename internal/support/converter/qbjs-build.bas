@@ -171,9 +171,9 @@ SUB DownloadQBJS
         PRINT "Download complete."
         PRINT "Unzipping QBJS..."
         $IF WINDOWS THEN
-            SHELL "cmd.exe /c" + Q$("cd " + Q$(qbjsParentDir) + " && tar -xf " + releaseTag + ".zip")
+            SHELL "powershell -command " + Q$("Expand-Archive  -Force -ErrorAction SilentlyContinue -Path '" + qbjsParentDir + PathSeparator + releaseTag + ".zip" + "' -DestinationPath '" + qbjsParentDir + "'")
         $ELSE
-            Shell "cd " + Q$(qbjsParentDir) + "; unzip " + releaseTag + ".zip"
+            SHELL "cd " + Q$(qbjsParentDir) + "; unzip " + releaseTag + ".zip"
         $END IF
         PRINT "Unzip complete."
         PRINT "Deleting zip."
@@ -189,7 +189,7 @@ SUB CompileSource
         $IF WINDOWS THEN
             SHELL "cmd.exe /c " + Q$("rmdir /s /q " + Q$(destDir))
         $ELSE
-            Shell "rm -rf " + Q$(destDir)
+            SHELL "rm -rf " + Q$(destDir)
         $END IF
     END IF
 
@@ -233,7 +233,7 @@ SUB CopyWebDependencies
         $IF WINDOWS THEN
             SHELL "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)) + " > NUL"
         $ELSE
-            Shell "\cp -f " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)
+            SHELL "\cp -f " + Q$(qbjsDir + PathSeparator + dependencies(i).src) + " " + Q$(destDir + PathSeparator + dependencies(i).dest)
         $END IF
     NEXT i
 END SUB
@@ -259,14 +259,13 @@ SUB CopyProjectFiles (path AS STRING)
                 $IF WINDOWS THEN
                     SHELL "@echo off && cmd.exe /c " + Q$("copy /Y " + Q$(file) + " " + Q$(destDir + PathSeparator + path) + " > NUL")
                 $ELSE
-                    Shell "\cp -f " + Q$(file) + " " + Q$(destDir + PathSeparator + path)
+                    SHELL "\cp -f " + Q$(file) + " " + Q$(destDir + PathSeparator + path)
                 $END IF
             END IF
         END IF
     LOOP UNTIL file = ""
 
     FOR i = 1 TO UBOUND(dirs)
-        'Print "cd " + path + dirs(i)
         CHDIR dirs(i)
         CopyProjectFiles path + dirs(i)
         CHDIR ".."
@@ -282,7 +281,7 @@ SUB StartWebserver (url AS STRING)
         $IF WINDOWS THEN
             SHELL _DONTWAIT "start /min cmd.exe /c " + Q$("title QBJS Web Server && node " + EQ$(webServerDir + "qbjs-webserver.js") + " " + PORT)
         $ELSE
-            Shell _DontWait "node " + Q$(webServerDir + "qbjs-webserver.js") + " " + PORT + " &"
+            SHELL _DONTWAIT "node " + Q$(webServerDir + "qbjs-webserver.js") + " " + PORT + " &"
         $END IF
     ELSE
         _WRITEFILE webServerDir + ".root-path-override", destDir
@@ -360,9 +359,9 @@ SUB LaunchURL (url AS STRING)
     $IF WIN THEN
         SHELL _DONTWAIT _HIDE "start " + url
     $ELSEIF MAC THEN
-        Shell _DontWait _Hide "open " + url
+        SHELL _DONTWAIT _HIDE "open " + url
     $ELSEIF LINUX THEN
-        Shell _DontWait _Hide "xdg-open " + url
+        Shell _DONTWAIT _HIDE "xdg-open " + url
     $END IF
 END SUB
 
@@ -401,7 +400,7 @@ FUNCTION Replace$ (s AS STRING, searchString AS STRING, newString AS STRING)
     DIM slen AS INTEGER
     slen = LEN(searchString)
 
-    FOR i = 1 TO LEN(s) '- slen + 1
+    FOR i = 1 TO LEN(s)
         IF MID$(s, i, slen) = searchString THEN
             ns = ns + newString
             i = i + slen - 1
