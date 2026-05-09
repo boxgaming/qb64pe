@@ -171,7 +171,7 @@ SUB DownloadQBJS
         PRINT "Download complete."
         PRINT "Unzipping QBJS..."
         $IF WINDOWS THEN
-            SHELL "powershell -command " + Q$("Expand-Archive  -Force -ErrorAction SilentlyContinue -Path '" + qbjsParentDir + PathSeparator + releaseTag + ".zip" + "' -DestinationPath '" + qbjsParentDir + "'")
+            SHELL "powershell " + Q$("$shell = New-Object -ComObject Shell.Application; $zipFile = $shell.NameSpace(\" + CHR$(34) + qbjsParentDir + PathSeparator + releaseTag + ".zip\" + CHR$(34) + "); $destination = $shell.NameSpace(\" + CHR$(34) + qbjsParentDir + "\" + CHR$(34) + "); $destination.CopyHere($zipFile.Items(), 20)")
         $ELSE
             SHELL "cd " + Q$(qbjsParentDir) + "; unzip " + releaseTag + ".zip"
         $END IF
